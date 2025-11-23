@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>EduTrack • Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  min-height:100vh;
+  font-family: "Inter", Arial, sans-serif;
+  background:#0d1117;
+  color:#f0f6fc;
+  display:flex;
+  flex-direction:column;
+}
+
+/* LOGIN UI */
+#loginScreen {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.65);
+  backdrop-filter:blur(10px);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+.login-box {
+  width:320px;
+  padding:25px;
+  background:#161b22;
+  border-radius:14px;
+  box-shadow:0 10px 35px rgba(0,0,0,0.6);
+  border:1px solid #30363d;
+}
+.login-box h2 {
+  text-align:center;
+  font-size:20px;
+  margin-bottom:15px;
+}
+.login-box input {
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:8px;
+  background:#0d1117;
+  border:1px solid #30363d;
+  color:white;
+}
+#loginBtn {
+  margin-top:15px;
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#238636;
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+#loginBtn:hover { background:#2ea043; }
+#msg {
+  text-align:center;
+  margin-top:10px;
+  font-size:12px;
+  color:#ff6b6b;
+}
+
+/* TOP BAR */
+.topbar {
+  padding:12px 20px;
+  background:#161b22;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid #30363d;
+}
+.topbar-title {
+  font-size:18px;
+  font-weight:600;
+}
+.btn {
+  cursor:pointer;
+  padding:7px 14px;
+  border-radius:8px;
+  border:none;
+  color:white;
+  background:#238636;
+  font-weight:600;
+}
+.btn:hover { background:#2ea043; }
+.btn-outline {
+  background:transparent;
+  border:1px solid #30363d !important;
+}
+.btn-outline:hover { background:#21262d; }
+
+/* LAYOUT */
+.admin-main {
+  padding:20px;
+  display:grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap:20px;
+}
+@media(max-width:900px){
+  .admin-main { grid-template-columns:1fr; }
+}
+
+/* CARDS */
+.panel {
+  background:#161b22;
+  padding:20px;
+  border-radius:14px;
+  border:1px solid #30363d;
+  box-shadow:0 4px 20px rgba(0,0,0,0.25);
+}
+.panel h2 {
+  font-size:16px;
+  font-weight:600;
+  margin-bottom:12px;
+}
+
+/* FORM INPUTS */
+label {
+  display:block;
+  margin-bottom:5px;
+  font-size:13px;
+  color:#c9d1d9;
+}
+input, select, textarea {
+  width:100%;
+  padding:9px;
+  margin-bottom:12px;
+  border-radius:8px;
+  background:#0d1117;
+  border:1px solid #30363d;
+  color:white;
+  font-size:14px;
+}
+input:focus, select:focus, textarea:focus {
+  outline:2px solid #58a6ff;
+  border-color:#58a6ff;
+}
+
+/* PREVIEW BOX */
+.preview-box {
+  height:160px;
+  border-radius:10px;
+  border:1px dashed #30363d;
+  background:#0d1117;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#6b7280;
+  text-align:center;
+  padding:6px;
+}
+.preview-box img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  border-radius:10px;
+}
+
+/* LOG ENTRIES */
+.log-entry {
+  background:#0d1117;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid #30363d;
+  margin-bottom:8px;
+  font-size:12px;
+}
+.log-entry-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:4px;
+}
+.log-room { font-weight:600; color:#f0f6fc; }
+.log-date { color:#8b949e; font-size:11px; }
+.log-note { color:#c9d1d9; margin-bottom:4px; }
+.log-files {
+  color:#8b949e;
+  font-size:11px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+
+<body>
+
+<!-- LOGIN UI -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h2>Admin Login</h2>
+    <input id="user" type="text" placeholder="Username">
+    <input id="pass" type="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+    <div id="msg"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none;">
+
+<header class="topbar">
+  <div class="topbar-title">EduTrack Admin</div>
+  <div style="display:flex; gap:10px;">
+    <button class="btn-outline btn" id="homeBtn">Home</button>
+    <button class="btn-outline btn" id="logoutBtn">Logout</button>
+  </div>
+</header>
+
+<main class="admin-main">
+  <!-- LEFT SIDE -->
+  <section class="panel">
+    <h2>Room Image Manager</h2>
+
+    <label for="roomSelect">Room</label>
+    <select id="roomSelect"></select>
+
+    <label for="imageFile">Preview new pano(s)</label>
+    <input type="file" id="imageFile" accept="image/*" multiple>
+    <div id="previewBox" class="preview-box">No image</div>
+
+    <label for="note">Note</label>
+    <textarea id="note" placeholder="Short note"></textarea>
+
+    <button class="btn" id="saveChangeBtn">Save to update log</button>
+  </section>
+
+  <!-- RIGHT SIDE -->
+  <section class="panel">
+    <h2>Update Log</h2>
+    <div id="logList"></div>
+  </section>
+</main>
+</div>
+
+<script>
+/* ========== FIREBASE CONFIG ========== */
+/* ⚠️ Replace with real config */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const ADMIN_TOKEN = "EDUTRACK_ADMIN_V1";
+
+/* ========== LOGIN HANDLING ========== */
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "admin";
+
+const loginScreen = document.getElementById("loginScreen");
+const dashboard   = document.getElementById("dashboard");
+
+function showDashboard() {
+  loginScreen.style.display = "none";
+  dashboard.style.display = "block";
+}
+function showLogin() {
+  loginScreen.style.display = "flex";
+  dashboard.style.display = "none";
+}
+
+if (localStorage.getItem("edutrackAdmin") === "true") showDashboard();
+
+document.getElementById("loginBtn").addEventListener("click", () => {
+  const u = document.getElementById("user").value.trim();
+  const p = document.getElementById("pass").value.trim();
+
+  if (u === ADMIN_USER && p === ADMIN_PASS) {
+    localStorage.setItem("edutrackAdmin", "true");
+    document.getElementById("msg").textContent = "";
+    showDashboard();
+  } else {
+    document.getElementById("msg").textContent = "Incorrect login.";
+  }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.removeItem("edutrackAdmin");
+  showLogin();
+});
+
+document.getElementById("homeBtn").addEventListener("click", () => {
+  window.location.href = "main.html";
+});
+
+/* ========== ROOM LIST ========== */
+const ROOMS = [
+  "101","102","103","104","105","106","107","108","110",
+  "201","202","203","204","205","206","207","208","209","210","211","214","215",
+  "AUDITORIUM","CASHIER","CLINIC","COMFORT ROOM","DEANS OFFICE","FACULTY",
+  "GUIDANCE OFFICE","KITCHEN LAB","LIBRARY","LINUX","PROPERTY CUSTODIAN",
+  "SCHOLARSHIP OFFICE","SLAB 1","SLAB 2","SLAB 3","SOFTWARE LAB",
+  "STUDENT AFFAIRS OFFICE","TECHNICAL OFFICE","NLAB"
+];
+
+const roomSelect = document.getElementById("roomSelect");
+function populateRoomOptions() {
+  roomSelect.innerHTML = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "Select room";
+  roomSelect.appendChild(placeholder);
+
+  ROOMS.forEach(room => {
+    const opt = document.createElement("option");
+    opt.value = room;
+    opt.textContent = room;
+    roomSelect.appendChild(opt);
+  });
+}
+populateRoomOptions();
+
+/* ========== DASHBOARD LOGIC ========== */
+const imageFile  = document.getElementById("imageFile");
+const previewBox = document.getElementById("previewBox");
+const saveBtn    = document.getElementById("saveChangeBtn");
+const logList    = document.getElementById("logList");
+
+function sortFilesByNumber(files) {
+  return files.sort((a, b) => {
+    const num = f => {
+      const m = f.name.match(/(\d+)/);
+      return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER;
+    };
+    return num(a) - num(b);
+  });
+}
+
+imageFile.addEventListener("change", () => {
+  let files = Array.from(imageFile.files);
+  if (!files.length) {
+    previewBox.textContent = "No image";
+    imageFile._sortedFiles = [];
+    return;
+  }
+
+  files = sortFilesByNumber(files);
+  imageFile._sortedFiles = files;
+
+  const first = files[0];
+  const url   = URL.createObjectURL(first);
+
+  previewBox.innerHTML = `
+    <div style="font-size:11px; margin-bottom:4px;">
+      ${files.length} image(s) selected.<br>
+      Showing: ${first.name}
+    </div>
+    <img src="${url}">
+  `;
+});
+
+saveBtn.addEventListener("click", () => {
+  const room = roomSelect.value;
+  const note = document.getElementById("note").value.trim();
+
+  if (!room) {
+    alert("Select a room first.");
+    return;
+  }
+
+  const files = imageFile._sortedFiles || Array.from(imageFile.files) || [];
+  const fileNames = files.map(f => f.name);
+  const fileCount = fileNames.length;
+
+  const timestamp = new Date().toLocaleString();
+  let filesSummary;
+
+  if (!fileCount) {
+    filesSummary = "No files attached";
+  } else {
+    const shown = fileNames.slice(0, 3).join(", ");
+    const extra = fileCount > 3 ? ` … (+${fileCount - 3} more)` : "";
+    filesSummary = `${fileCount} file(s): ${shown}${extra}`;
+  }
+
+  // UI log
+  const entry = document.createElement("div");
+  entry.className = "log-entry";
+  entry.innerHTML = `
+    <div class="log-entry-header">
+      <span class="log-room">${room}</span>
+      <span class="log-date">${timestamp}</span>
+    </div>
+    <div class="log-note">${note || "(no note)"}</div>
+    <div class="log-files">${filesSummary}</div>
+  `;
+  logList.prepend(entry);
+
+  // DB log
+  const logData = {
+    room,
+    note: note || null,
+    fileNames,
+    fileCount,
+    timestamp,
+    adminUser: ADMIN_USER,
+    token: ADMIN_TOKEN
+  };
+
+  db.ref("roomUpdateLogs").push(logData).catch(err => {
+    console.error("Error logging to database:", err);
+  });
+
+  document.getElementById("note").value = "";
+});
+
+/* ========== ACTIVITY LOG VIEWER (PHP LOGS) ========== */
+function renderActivityLogRow(row) {
+  const div = document.createElement("div");
+  div.className = "log-entry";
+
+  const roomLabel = row.room_id || "(no room)";
+  const dateLabel = row.created_at || "";
+  const noteLabel = row.event_type || "(no event type)";
+  const detailsShort =
+    row.details && row.details !== ""
+      ? row.details
+      : (row.query_text ? "Query: " + row.query_text : "");
+
+  div.innerHTML = `
+    <div class="log-entry-header">
+      <span class="log-room">${roomLabel}</span>
+      <span class="log-date">${dateLabel}</span>
+    </div>
+    <div class="log-note">${noteLabel}</div>
+    <div class="log-files">${detailsShort || ""}</div>
+  `;
+  return div;
+}
+
+function loadActivityLogs() {
+  fetch("get_activity_logs.php")
+    .then(res => res.json())
+    .then(rows => {
+      if (!Array.isArray(rows)) return;
+      // append activity logs BELOW existing manual room logs
+      rows.forEach(row => {
+        logList.appendChild(renderActivityLogRow(row));
+      });
+    })
+    .catch(err => console.error("Failed to load activity logs", err));
+}
+
+document.addEventListener("DOMContentLoaded", loadActivityLogs);
+</script>
+
+</body>
+</html>
