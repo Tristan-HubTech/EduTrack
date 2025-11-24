@@ -230,6 +230,13 @@ input:focus, select:focus, textarea:focus {
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
+/* LIMIT HEIGHT OF LOG LIST SO PANEL DOESN'T KEEP GROWING */
+#logList {
+  max-height: 360px;      /* change if you want taller/shorter */
+  overflow-y: auto;
+  padding-right: 4px;
+}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
