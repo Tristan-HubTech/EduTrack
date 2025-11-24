@@ -1,58 +1,26 @@
-// ===== BASIC MARZIPANO SETUP =====
+// ====== BASIC MARZIPANO SETUP ======
 var panoElement = document.getElementById("pano");
+
+// Create viewer
 var viewer = new Marzipano.Viewer(panoElement);
 
-// ===== MANUAL DRAG CONTROLS (mouse only, no scroll zoom) =====
-let isDragging = false;
-let lastX = 0;
-let lastY = 0;
-
-panoElement.addEventListener("mousedown", function (e) {
-  isDragging = true;
-  lastX = e.clientX;
-  lastY = e.clientY;
-});
-
-window.addEventListener("mouseup", function () {
-  isDragging = false;
-});
-
-window.addEventListener("mousemove", function (e) {
-  if (!isDragging) return;
-
-  var dx = e.clientX - lastX;
-  var dy = e.clientY - lastY;
-  lastX = e.clientX;
-  lastY = e.clientY;
-
-  var v = viewer.view();
-  var yaw = v.yaw();
-  var pitch = v.pitch();
-
-  v.setYaw(yaw - dx * 0.002);
-  v.setPitch(pitch + dy * 0.002);
-});
-
-// ===== EQUIRECTANGULAR SCENE CREATOR =====
+// Equirectangular image source & geometry
 function createSceneConfig(imageUrl) {
   var source = Marzipano.ImageUrlSource.fromString(imageUrl);
   var geometry = new Marzipano.EquirectGeometry([{ width: 4000 }]);
-  var limiter = Marzipano.RectilinearView.limit.traditional(
-    1024,
-    120 * Math.PI / 180
-  );
+  var limiter = Marzipano.RectilinearView.limit.traditional(1024, 120 * Math.PI / 180);
   var view = new Marzipano.RectilinearView(null, limiter);
 
   var scene = viewer.createScene({
     source: source,
     geometry: geometry,
     view: view,
-      pinFirstLevel: true
-    });
+    pinFirstLevel: true
+  });
 
-  return { scene: scene, view: view };
+  // save image URL so blurFaces can use it
+  return { scene: scene, view: view, url: imageUrl };
 }
-
 
 // ====== DEFINE SCENES ======
 var scenes = {
